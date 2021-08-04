@@ -1,0 +1,32 @@
+import requests, urllib3, json
+
+def get_token(url, resource, username, password):
+    payload = {
+        'grant_type': 'client_credentials',
+        'client_id': username,
+        'client_secret': password,
+        'Content-Type': 'x-www-form-urlencoded',
+        'resource': resource
+    }
+
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning())
+    ApiReturn = requests.post(url, data=payload, verify=False)
+    ApiToken = json.loads(ApiReturn.content)['access_token']
+    return { "X-Api-Key": ApiToken, 'Content-Type': 'application/json'}
+
+
+WorkspaceId = 'ed4fca00-14cb-4c8b-a4e8-69c63d1541de'
+TenantId = ''
+ClientId = ''
+ClientSecret = '' 
+loginURL = 'https://login.microsoft.com/' + TenantId + '/oauth2/token'
+resource = 'https://api.loganalytics.io'
+url = 'https://api.loganalytics.io/v1/workspaces' + WorkspaceId + '/query'
+query = 'CDW_Logging_CL | limit 5'
+headers = get_token(loginURL, resource, ClientId, ClientSecret)
+params = {'query': query}
+
+result = requests.get(url, params=params, headers=headers, verify=False)
+rows = len(result.json()['tables'][0]['rows'])
+for row in range(0,rows):
+    print(result.json()['tables'][0]['rows'][row])
